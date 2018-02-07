@@ -16,6 +16,11 @@
 package com.example.android.sunshine.data;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.PreferenceManager;
+
+import com.example.android.sunshine.R;
 
 public class SunshinePreferences {
 
@@ -87,9 +92,15 @@ public class SunshinePreferences {
      * "94043,USA" if SharedPreferences have not been implemented yet.
      */
     public static String getPreferredWeatherLocation(Context context) {
-        // TODO (1) Return the user's preferred location
-        /** This will be implemented in a future lesson **/
-        return getDefaultWeatherLocation();
+        // COMPLETED (1) Return the user's preferred location
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+
+        String keyLoc=context.getString(R.string.pref_location_key);
+        String defLoc=context.getString(R.string.pref_location_default);
+
+        return sharedPref.getString(keyLoc,defLoc);
+
+        //return getDefaultWeatherLocation();
     }
 
     /**
@@ -100,9 +111,23 @@ public class SunshinePreferences {
      * @return true If metric display should be used
      */
     public static boolean isMetric(Context context) {
-        // TODO (2) Return true if the user's preference for units is metric, false otherwise
+        // COMPLETED (2) Return true if the user's preference for units is metric, false otherwise
         /** This will be implemented in a future lesson **/
-        return true;
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+
+        String keyMet = context.getString(R.string.pref_units_key);
+        String defMet = context.getString(R.string.pref_units_metric);
+        String storedMet = sharedPref.getString(keyMet, defMet);
+        String metric = context.getString(R.string.pref_units_metric);
+
+        boolean preferedUnit;
+
+        if (defMet.equals(storedMet)) {
+            preferedUnit = true;
+        } else {
+            preferedUnit = false;
+        }
+        return preferedUnit;
     }
 
     /**
