@@ -18,7 +18,10 @@ package com.example.android.sunshine.data;
 import android.annotation.TargetApi;
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
@@ -34,21 +37,34 @@ import android.support.annotation.NonNull;
  */
 public class WeatherProvider extends ContentProvider {
 
-//  TODO (5) Create static constant integer values named CODE_WEATHER & CODE_WEATHER_WITH_DATE to identify the URIs this ContentProvider can handle
+//  COMPLETED (5) Create static constant integer values named CODE_WEATHER & CODE_WEATHER_WITH_DATE to identify the URIs this ContentProvider can handle
+    public final static int CODE_WEATHER=100;
+    public final static int CODE_WEATHER_WITH_DATE=101;
 
-//  TODO (7) Instantiate a static UriMatcher using the buildUriMatcher method
+//  COMPLETED(7) Instantiate a static UriMatcher using the buildUriMatcher method
+    private static final UriMatcher sUriMatcher=buildUriMatcher();
 
-    WeatherDbHelper mOpenHelper;
+    private WeatherDbHelper mOpenHelper;
 
-//  TODO (6) Write a method called buildUriMatcher where you match URI's to their numeric ID
+//  COMPLETED (6) Write a method called buildUriMatcher where you match URI's to their numeric ID
+    public static UriMatcher buildUriMatcher(){
+        UriMatcher matcher=new UriMatcher(UriMatcher.NO_MATCH);
 
-//  TODO (1) Implement onCreate
+        matcher.addURI(WeatherContract.CONTENT_AUTHORITY,WeatherContract.PATH_WEATHER,CODE_WEATHER);
+        matcher.addURI(WeatherContract.CONTENT_AUTHORITY,WeatherContract.PATH_WEATHER+"/#",CODE_WEATHER_WITH_DATE);
+
+        return matcher;
+    }
+
+//  COMPLETED (1) Implement onCreate
     @Override
     public boolean onCreate() {
-//      TODO (2) Within onCreate, instantiate our mOpenHelper
+//      COMPLETED (2) Within onCreate, instantiate our mOpenHelper
+        Context context=getContext();
+        mOpenHelper = new WeatherDbHelper(context);
 
-//      TODO (3) Return true from onCreate to signify success performing setup
-        return false;
+//      COMPLETED (3) Return true from onCreate to signify success performing setup
+        return true;
     }
 
     /**
@@ -88,11 +104,45 @@ public class WeatherProvider extends ContentProvider {
     @Override
     public Cursor query(@NonNull Uri uri, String[] projection, String selection,
                         String[] selectionArgs, String sortOrder) {
-        throw new RuntimeException("Student, implement the query method!");
 
-//      TODO (9) Handle queries on both the weather and weather with date URI
+        final SQLiteDatabase db = mOpenHelper.getReadableDatabase();
 
-//      TODO (10) Call setNotificationUri on the cursor and then return the cursor
+        int match = sUriMatcher.match(uri);
+        Cursor retCursor;
+
+
+
+//      COMPLETED (9) Handle queries on both the weather and weather with date URI
+        switch (match){
+            case CODE_WEATHER:
+                retCursor =  db.query(WeatherContract.WeatherEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder);
+                break;
+            case CODE_WEATHER_WITH_DATE:
+                String normalizedUtcDateString = uri.getLastPathSegment();
+                String[] selectionArguments = new String[]{normalizedUtcDateString};
+
+                retCursor = db.query(WeatherContract.WeatherEntry.TABLE_NAME,
+                        projection,
+                        WeatherContract.WeatherEntry.COLUMN_DATE+ " = ? ",
+                        selectionArguments,
+                        null,
+                        null,
+                        sortOrder);
+                break;
+            default:
+                throw (new UnsupportedOperationException("Invalid uri "+uri));
+        }
+
+//      COMPLETED (10) Call setNotificationUri on the cursor and then return the cursor
+        retCursor.setNotificationUri(getContext().getContentResolver(),uri);
+
+        return retCursor;
     }
 
     /**
